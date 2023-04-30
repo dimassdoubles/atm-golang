@@ -18,14 +18,34 @@ type Machine struct {
 }
 
 func (m *Machine) execute(menu int) error {
-	var err error
+	var err error = nil
 	switch menu {
 	// print informasi kartu
 	case 1:
-		m.printInfo()
-		err = nil
+		err = m.printInfo()
+	// mutasi
+	case 2:
+		err = m.printMutasi()
+	case 3:
+		err = m.bayarBelanja()
+	// tarik tunai
+	case 4:
+		err = m.tarik()
+	// setor tunai
+	case 5:
+		err = m.setor()
+	// transfer
+	case 6:
+		err = m.transfer()
+	// topup e-money
+	case 7:
+		err = m.topupEmoney()
 	default:
-		fmt.Println("Hello World!")
+		fmt.Println("maaf, sistem tidak dapat memproses permintaan anda")
+	}
+
+	if err != nil {
+		fmt.Println("transaksi berhasil")
 	}
 
 	return err
@@ -86,24 +106,188 @@ func (m *Machine) isNextTransaction() bool {
 	fmt.Print("ingin melakukan transaksi lagi ? (Y/n): ")
 	_, err := fmt.Scanln(&next)
 	
-	if err != nil {
-		return true
-	}
-
-	if strings.TrimSpace(next) == "n" {
+	if err != nil || strings.TrimSpace(next) == "n"{
 		m.Card = nil
 		return false
 	}
+
+	m.validate()
 
 	return true
 }
 
 func (m Machine) setor() error {
+	amount := inputAmount()
 
+	err := m.Card.Add(amount)
+	if err != nil {
+		return err
+	}
+
+	transaction := transaction.TarikTransaction{
+		Time: getTime(), 
+		Nominal: amount, 
+		CardNumber: m.Card.GetCardNumber(),
+	}
+
+	m.TransactionRepo.Add(transaction)
+
+	return nil
 } 
 
-func (m Machine) printInfo() {
+func (m Machine) tarik() error {
+	amount := inputAmount()
+
+	err := m.Card.Substract(amount)
+	if err != nil {
+		return err
+	}
+
+	transaction := transaction.SetorTransaction{
+		Time: getTime(), 
+		Nominal: amount, 
+		CardNumber: m.Card.GetCardNumber(),
+	}
+
+	m.TransactionRepo.Add(transaction)
+
+	return nil
+}
+
+func (m Machine) printMutasi() error {
+
+	transactions := m.TransactionRepo.FilterByCardNumber(m.Card.GetCardNumber())
+	for i := range transactions{
+		fmt.Println(transactions[i])
+	}
+
+	return nil
+}
+
+func (m Machine) printInfo() error {
 	fmt.Println(m.Card)
+
+	return nil
+}
+
+func (m Machine) bayarBelanja() error {
+	amount := inputAmount()
+
+	var err error = nil
+
+	switch m.Card.(type) {
+	case *card.ATM :
+		if m.validate() {
+			err = m.Card.Substract(amount)
+			if err != nil {
+				return err
+			}
+		}
+
+	case *card.EMoney :
+		err = m.Card.Substract(amount)
+		if err != nil {
+			return err
+		}
+	}
+
+	transaction := transaction.BelanjaTransaction{
+		Time: getTime(), 
+		Nominal: amount, 
+		CardNumber: m.Card.GetCardNumber(),
+	}
+	m.TransactionRepo.Add(transaction)
+
+	return err	
+}
+
+func (m Machine) transfer() error {
+	accountNumber, err := inputCardNumber()
+	if err != nil {
+		return err
+	}
+
+	receiverCard, err := m.CardRepo.FindCardByAccountNumber(accountNumber)
+	if err != nil {
+		return err
+	}
+
+	amount := inputAmount()
+
+	err = m.Card.Substract(amount)
+	if err != nil {
+		return err
+	}
+	err = receiverCard.Add(amount)
+	if err != nil {
+		return err
+	}
+
+	sendTransaction := transaction.SendTransaction{
+		Time: getTime(), 
+		Nominal: amount, 
+		CardNumber: m.Card.GetCardNumber(), 
+		ReceiverCardNumber:  receiverCard.GetCardNumber(),
+	}
+
+	receiveTransaction := transaction.ReceiveTransaction{
+		Time: getTime(),
+		Nominal: amount,
+		CardNumber: receiverCard.GetCardNumber(),
+		SenderCardNumber: m.Card.GetCardNumber(),
+	}
+
+	m.TransactionRepo.Add(sendTransaction)
+	m.TransactionRepo.Add(receiveTransaction)
+
+	return nil
+}
+
+func (m Machine) topupEmoney() error {
+	cardNumber, err := inputCardNumber()
+	if err != nil {
+		return err
+	}
+
+	receiverCard, err := m.CardRepo.FindCardByCardNumber(cardNumber)
+	if err != nil {
+		return err
+	}
+
+	receiverCard, isEmoney := receiverCard.(*card.EMoney)
+	if !isEmoney {
+		return errors.New("maaf, kartu e-money tidak terdaftar")
+	}
+
+	amount := inputAmount()
+
+	err = m.Card.Substract(amount)
+	if err != nil {
+		return err
+	}
+	err = receiverCard.Add(amount)
+	if err != nil {
+		return err
+	}
+
+	sendTransaction := transaction.SendTransaction{
+		Time: getTime(), 
+		Nominal: amount, 
+		CardNumber: m.Card.GetCardNumber(), 
+		ReceiverCardNumber:  receiverCard.GetCardNumber(),
+	}
+
+	receiveTransaction := transaction.ReceiveTransaction{
+		Time: getTime(),
+		Nominal: amount,
+		CardNumber: receiverCard.GetCardNumber(),
+		SenderCardNumber: m.Card.GetCardNumber(),
+	}
+
+	m.TransactionRepo.Add(sendTransaction)
+	m.TransactionRepo.Add(receiveTransaction)
+
+	return nil
 }
 
 func (m Machine) printMenu() {
@@ -173,8 +357,6 @@ func (m Machine) isMenuValid(menu int) error {
 	return nil
 }
 
-
-
 func isAtmValid(cardNumber string) bool {
 	cardNumberLength := len(cardNumber)
 	return cardNumberLength == 10 
@@ -221,15 +403,22 @@ func inputPin() string {
 	return pin
 }
 
-func inputAmount() int {
-	var amount int;
+func inputAmount() float64 {
+	var amount float64;
 	fmt.Print("masukan nominal: ")
 	_, err := fmt.Scan(&amount)
 
 	if err != nil {
 		fmt.Println(err)
 		return inputAmount()
+	} else if amount <= 0 {
+		fmt.Println("maaf, nominal tidak valid")
+		return inputAmount()
 	}
 
 	return amount
+}
+
+func getTime() string {
+	return "time"
 }

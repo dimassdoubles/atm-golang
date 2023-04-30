@@ -1,47 +1,97 @@
 package transaction
 
+import (
+	"fmt"
+)
+
 type Transaction interface {
-	PrintDetails()
 	GetCardNumber() string
 }
 
-type TransactionInfo struct {
-	CardNumber, Date string
-	Amount, Balance float64
+type SetorTransaction struct {
+	Time string
+	Nominal float64
+	CardNumber string
+}
+
+func (t SetorTransaction) GetCardNumber() string {
+	return t.CardNumber
+}
+
+func (t SetorTransaction) String() string {
+	return fmt.Sprintln(t.Time, " | ", t.Nominal, " - setor tunai");
+}
+
+type TarikTransaction struct {
+	Time string
+	Nominal float64
+	CardNumber string
+}
+
+func (t TarikTransaction) GetCardNumber() string {
+	return t.CardNumber
+}
+
+func (t TarikTransaction) String() string {
+	return fmt.Sprintln(t.Time, " | ", t.Nominal, " - tarik tunai")
+}
+
+type BelanjaTransaction struct {
+	Time string
+	Nominal float64
+	CardNumber string
+}
+
+func (t BelanjaTransaction) GetCardNumber() string {
+	return t.CardNumber
+}
+
+func (t BelanjaTransaction) String() string {
+	return fmt.Sprintln(t.Time, " | ", t.Nominal, " - pembayaran belanja")
 }
 
 type SendTransaction struct {
-	TransactionInfo
-	ReceiverAccountNumber, ReceiverName string
-}
-
-func (st SendTransaction) GetCardNumber() string {
-	return st.CardNumber
-}
-
-type ReceiveTransaction struct {
-	TransactionInfo
-	SenderAccountNumber, SenderName string
-}
-
-func (rt ReceiveTransaction) GetCardNumber() string {
-	return rt.CardNumber
-}
-
-type TopUpTransaction struct {
-	TransactionInfo
+	Time string
+	Nominal float64
+	CardNumber string
 	ReceiverCardNumber string
 }
 
-func (tt TopUpTransaction) GetCardNumber() string {
-	return tt.CardNumber
+func (t SendTransaction) GetCardNumber() string {
+	return t.CardNumber
 }
 
-type CheckOutTransaction struct {
-	TransactionInfo
+func (t SendTransaction) String() string {
+	return fmt.Sprintln(t.Time, " | ", t.Nominal, " - kirim ke ", t.ReceiverCardNumber)
 }
 
-func (ct CheckOutTransaction) GetCardNumber() string {
-	return ct.CardNumber
+type ReceiveTransaction struct {
+	Time string
+	Nominal float64
+	CardNumber string
+	SenderCardNumber string
+}
+
+func (t ReceiveTransaction) GetCardNumber() string {
+	return t.CardNumber
+}
+
+func (t ReceiveTransaction) String() string {
+	return fmt.Sprintln(t.Time, " | ", t.Nominal, " - terima dari ", t.SenderCardNumber)
+}
+
+type TopUpEmoneyTransaction struct {
+	Time string
+	Nominal float64
+	CardNumber string
+	ReceiverCardNumber string
+}
+
+func (t TopUpEmoneyTransaction) GetCardNumber() string {
+	return t.CardNumber
+}
+
+func (t TopUpEmoneyTransaction) String() string {
+	return fmt.Sprintln(t.Time, " | ", t.Nominal, " - top up e-money ", t.ReceiverCardNumber)
 }
 
