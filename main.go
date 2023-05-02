@@ -30,37 +30,74 @@ import (
 func main() {
 
 	transactionRepo := &transaction.TransactionsRepository{
-		Data : []transaction.Transaction{},
+		Data: []transaction.Transaction{},
 	}
 
 	cardRepo := &card.CardsRepository{
-		Data : []card.Card{
-			&card.EMoney{
-				CardInfo: card.CardInfo{
-					CardNumber: "9999999999",
-					Pin: "999999",
-					Balance: 100,
-				},
-			},
-			&card.ATM{
-				CardInfo: card.CardInfo{
-					CardNumber: "8888888888",
-					Pin: "888888",
-					Balance: 900,
-				},
-				Name: "David Kurniawan",
-				AccountNumber: "8888888888",
-				BankBranch: "Semarang",
-			},
+		Data: []card.Card{
 			&card.ATM{
 				CardInfo: card.CardInfo{
 					CardNumber: "1111111111",
-					Pin: "111111",
-					Balance: 1000,
+					Pin:        "111111",
+					Balance:    85000,
 				},
-				Name: "David Kurniawan",
+				Name:          "Dimas Saputro",
 				AccountNumber: "1111111111",
-				BankBranch: "Semarang",
+				BankBranch:    "Semarang",
+			},
+			&card.ATM{
+				CardInfo: card.CardInfo{
+					CardNumber: "2222222222",
+					Pin:        "222222",
+					Balance:    280000,
+				},
+				Name:          "Siti Nurhaliza",
+				AccountNumber: "2222222222",
+				BankBranch:    "Semarang",
+			},
+			&card.ATM{
+				CardInfo: card.CardInfo{
+					CardNumber: "3333333333",
+					Pin:        "333333",
+					Balance:    10000,
+				},
+				Name:          "Budi Santoso",
+				AccountNumber: "3333333333",
+				BankBranch:    "Bandung",
+			},
+			&card.ATM{
+				CardInfo: card.CardInfo{
+					CardNumber: "4444444444",
+					Pin:        "444444",
+					Balance:    800000,
+				},
+				Name:          "Rina Anggraeni",
+				AccountNumber: "4444444444",
+				BankBranch:    "Medan",
+			},
+			&card.ATM{
+				CardInfo: card.CardInfo{
+					CardNumber: "5555555555",
+					Pin:        "555555",
+					Balance:    400000,
+				},
+				Name:          "Muhammad Yusuf",
+				AccountNumber: "5555555555",
+				BankBranch:    "Surabaya",
+			},
+			&card.EMoney{
+				CardInfo: card.CardInfo{
+					CardNumber: "9999999999",
+					Pin:        "999999",
+					Balance:    350000,
+				},
+			},
+			&card.EMoney{
+				CardInfo: card.CardInfo{
+					CardNumber: "8888888888",
+					Pin:        "888888",
+					Balance:    650000,
+				},
 			},
 		},
 	}
@@ -69,62 +106,12 @@ func main() {
 
 	for {
 		err := machine.Start()
-		if (err != nil) {
+		if err != nil {
 			fmt.Println(err)
-		} else {
-			fmt.Println("tidak ada error")
 		}
+
+		fmt.Println("transaksi selesai")
+		fmt.Println()
+		fmt.Println()
 	}
-	
-
-
-	// fmt.Println(cards.Data[0].GetCardNumber());
-
-	// accountNumber, err := inputAccountNumber()
-	// if err != nil {
-	// 	panic(err)
-	// }
-	
-	// myAtm, err := cards.FindCardByAccountNumber(accountNumber)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// myAtm.PrintDetails()
-
-	// st := transaction.SendTransaction{
-	// 	TransactionInfo: transaction.TransactionInfo{
-	// 		CardNumber: "2222222222",
-	// 		Date: "012323",
-	// 		Amount: 1000,
-	// 		Balance: 9000,
-	// 	},
-	// 	ReceiverAccountNumber: "1111111111",
-	// 	ReceiverName: "Dimas Saputro",
-	// }
-
-	// rt := transaction.ReceiveTransaction{
-	// 	TransactionInfo: transaction.TransactionInfo{
-	// 		CardNumber: "3333333333",
-	// 		Date: "012323",
-	// 		Amount: 20,
-	// 		Balance: 80,
-	// 	},
-	// 	SenderAccountNumber: "2222222222",
-	// 	SenderName: "Brian Rakajati",
-	// }
-
-	// transactions.Add(st)
-	// transactions.Add(rt)
-
-	// for v:= range transactions.Data {
-	// 	transactions.Data[v].PrintDetails()
-	// }
-
-	// filteredTransaction := transactions.FilterByCardNumber("2222222222")
-
-	// for i:= range filteredTransaction {
-	// 	filteredTransaction[i].PrintDetails()
-	// }
-
 }

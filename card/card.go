@@ -2,17 +2,18 @@ package card
 
 import (
 	"errors"
-	"fmt"
+	"fmt"	
+	"strconv"
 )
 
 type CardInfo struct {
 	CardNumber, Pin string
-	Balance float64
+	Balance int
 }
 
 type Card interface {
-	Add(amount float64) error
-	Substract(amount float64) error
+	Add(amount int) error
+	Substract(amount int) error
 	GetCardNumber() string
 	Validate(pin string) bool
 }
@@ -26,18 +27,18 @@ func (c CardInfo) String() string {
 	result := fmt.Sprintln("Informasi Kartu")
 	result += fmt.Sprintln("---------------")
 	result += fmt.Sprintln("Nomor Kartu    :", c.CardNumber)
-	result += fmt.Sprintln("Saldo          :", c.Balance)
+	result += fmt.Sprintln("Saldo          :", strconv.Itoa(c.Balance))
 
 	return result
 }
 
 
-func (atm *ATM) Add(amount float64) error {
+func (atm *ATM) Add(amount int) error {
 	atm.Balance = atm.Balance + amount
 	return nil
 }
 
-func (atm *ATM) Substract(amount float64) error {
+func (atm *ATM) Substract(amount int) error {
 	if amount < atm.Balance {
 		atm.Balance = atm.Balance - amount
 		return nil
@@ -66,7 +67,7 @@ type EMoney struct {
 	CardInfo
 }
 
-func (emoney *EMoney) Add(amount float64) error {
+func (emoney *EMoney) Add(amount int) error {
 	newBalance := emoney.CardInfo.Balance + amount
 	if newBalance > 1000000 {
 		return errors.New("saldo melebihi batas maksimal")
@@ -75,7 +76,7 @@ func (emoney *EMoney) Add(amount float64) error {
 	return nil
 }
 
-func (emoney *EMoney) Substract(amount float64) error {
+func (emoney *EMoney) Substract(amount int) error {
 	if amount < emoney.Balance {
 		emoney.Balance = emoney.Balance - amount
 		return nil

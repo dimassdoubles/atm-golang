@@ -3,18 +3,18 @@ package machine
 import (
 	"errors"
 	"fmt"
+	"regexp"
+	"strings"
+	"time"
 
 	"git.solusiteknologi.co.id/golab/atm/card"
 	"git.solusiteknologi.co.id/golab/atm/transaction"
-
-	"regexp"
-	"strings"
 )
 
 type Machine struct {
-	CardRepo *card.CardsRepository
+	CardRepo        *card.CardsRepository
 	TransactionRepo *transaction.TransactionsRepository
-	Card card.Card
+	Card            card.Card
 }
 
 func (m *Machine) execute(menu int) error {
@@ -44,9 +44,12 @@ func (m *Machine) execute(menu int) error {
 		fmt.Println("maaf, sistem tidak dapat memproses permintaan anda")
 	}
 
-	if err != nil {
+	if err == nil {
 		fmt.Println("transaksi berhasil")
 	}
+
+	fmt.Println()
+	fmt.Println()
 
 	return err
 }
@@ -57,26 +60,27 @@ func (m Machine) Start() error {
 		return err
 	}
 
+	fmt.Println()
 	menu := m.inputMenu()
 
+	fmt.Println()
 	err = m.execute(menu)
 	if err != nil {
 		fmt.Println(err)
 	}
 
+	fmt.Println()
 	for m.isNextTransaction() {
 		nextMenu := m.inputMenu()
 
 		err = m.execute(nextMenu)
 		if err != nil {
-			return err
+			fmt.Println(err)
 		}
 	}
 
-	fmt.Println("transaksi selesai")
-
 	return nil
-}	
+}
 
 func (m *Machine) insert() error {
 	cardNumber, err := inputCardNumber()
@@ -97,21 +101,21 @@ func (m *Machine) insert() error {
 	} else {
 		return errors.New("maaf, pin yang anda masukan salah")
 	}
-	
+
 	return nil
 }
 
 func (m *Machine) isNextTransaction() bool {
-	var next string;
+	var next string
 	fmt.Print("ingin melakukan transaksi lagi ? (Y/n): ")
-	_, err := fmt.Scanln(&next)
-	
-	if err != nil || strings.TrimSpace(next) == "n"{
+	fmt.Scanln(&next)
+
+	if strings.TrimSpace(next) == "n" {
 		m.Card = nil
 		return false
 	}
 
-	m.validate()
+	// m.validate()
 
 	return true
 }
@@ -124,16 +128,16 @@ func (m Machine) setor() error {
 		return err
 	}
 
-	transaction := transaction.TarikTransaction{
-		Time: getTime(), 
-		Nominal: amount, 
+	transaction := transaction.SetorTransaction{
+		Time:       getTime(),
+		Nominal:    amount,
 		CardNumber: m.Card.GetCardNumber(),
 	}
 
 	m.TransactionRepo.Add(transaction)
 
 	return nil
-} 
+}
 
 func (m Machine) tarik() error {
 	amount := inputAmount()
@@ -143,9 +147,9 @@ func (m Machine) tarik() error {
 		return err
 	}
 
-	transaction := transaction.SetorTransaction{
-		Time: getTime(), 
-		Nominal: amount, 
+	transaction := transaction.TarikTransaction{
+		Time:       getTime(),
+		Nominal:    amount,
 		CardNumber: m.Card.GetCardNumber(),
 	}
 
@@ -157,7 +161,7 @@ func (m Machine) tarik() error {
 func (m Machine) printMutasi() error {
 
 	transactions := m.TransactionRepo.FilterByCardNumber(m.Card.GetCardNumber())
-	for i := range transactions{
+	for i := range transactions {
 		fmt.Println(transactions[i])
 	}
 
@@ -176,7 +180,7 @@ func (m Machine) bayarBelanja() error {
 	var err error = nil
 
 	switch m.Card.(type) {
-	case *card.ATM :
+	case *card.ATM:
 		if m.validate() {
 			err = m.Card.Substract(amount)
 			if err != nil {
@@ -184,7 +188,7 @@ func (m Machine) bayarBelanja() error {
 			}
 		}
 
-	case *card.EMoney :
+	case *card.EMoney:
 		err = m.Card.Substract(amount)
 		if err != nil {
 			return err
@@ -192,13 +196,13 @@ func (m Machine) bayarBelanja() error {
 	}
 
 	transaction := transaction.BelanjaTransaction{
-		Time: getTime(), 
-		Nominal: amount, 
+		Time:       getTime(),
+		Nominal:    amount,
 		CardNumber: m.Card.GetCardNumber(),
 	}
 	m.TransactionRepo.Add(transaction)
 
-	return err	
+	return err
 }
 
 func (m Machine) transfer() error {
@@ -220,20 +224,21 @@ func (m Machine) transfer() error {
 	}
 	err = receiverCard.Add(amount)
 	if err != nil {
+		m.Card.Add(amount)
 		return err
 	}
 
 	sendTransaction := transaction.SendTransaction{
-		Time: getTime(), 
-		Nominal: amount, 
-		CardNumber: m.Card.GetCardNumber(), 
-		ReceiverCardNumber:  receiverCard.GetCardNumber(),
+		Time:               getTime(),
+		Nominal:            amount,
+		CardNumber:         m.Card.GetCardNumber(),
+		ReceiverCardNumber: receiverCard.GetCardNumber(),
 	}
 
 	receiveTransaction := transaction.ReceiveTransaction{
-		Time: getTime(),
-		Nominal: amount,
-		CardNumber: receiverCard.GetCardNumber(),
+		Time:             getTime(),
+		Nominal:          amount,
+		CardNumber:       receiverCard.GetCardNumber(),
 		SenderCardNumber: m.Card.GetCardNumber(),
 	}
 
@@ -267,20 +272,21 @@ func (m Machine) topupEmoney() error {
 	}
 	err = receiverCard.Add(amount)
 	if err != nil {
+		m.Card.Add(amount)
 		return err
 	}
 
 	sendTransaction := transaction.SendTransaction{
-		Time: getTime(), 
-		Nominal: amount, 
-		CardNumber: m.Card.GetCardNumber(), 
-		ReceiverCardNumber:  receiverCard.GetCardNumber(),
+		Time:               getTime(),
+		Nominal:            amount,
+		CardNumber:         m.Card.GetCardNumber(),
+		ReceiverCardNumber: receiverCard.GetCardNumber(),
 	}
 
 	receiveTransaction := transaction.ReceiveTransaction{
-		Time: getTime(),
-		Nominal: amount,
-		CardNumber: receiverCard.GetCardNumber(),
+		Time:             getTime(),
+		Nominal:          amount,
+		CardNumber:       receiverCard.GetCardNumber(),
 		SenderCardNumber: m.Card.GetCardNumber(),
 	}
 
@@ -297,7 +303,7 @@ func (m Machine) printMenu() {
 	fmt.Println("3. pembayaran belanja")
 
 	_, isAtm := m.Card.(*card.ATM)
-	if (isAtm) {
+	if isAtm {
 		fmt.Println("4. tarik tunai")
 		fmt.Println("5. setor tunai")
 		fmt.Println("6. transfer")
@@ -318,7 +324,7 @@ func (m Machine) validate() bool {
 func (m Machine) inputMenu() int {
 	m.printMenu()
 
-	var menu int;
+	var menu int
 	fmt.Print("masukan pilihan: ")
 	_, err := fmt.Scan(&menu)
 
@@ -328,7 +334,7 @@ func (m Machine) inputMenu() int {
 	}
 
 	err = m.isMenuValid(menu)
-	if (err != nil) {
+	if err != nil {
 		fmt.Println(err)
 		return m.inputMenu()
 	}
@@ -359,15 +365,15 @@ func (m Machine) isMenuValid(menu int) error {
 
 func isAtmValid(cardNumber string) bool {
 	cardNumberLength := len(cardNumber)
-	return cardNumberLength == 10 
+	return cardNumberLength == 10
 }
 
 func inputCardNumber() (string, error) {
-	var cardNumber string;
+	var cardNumber string
 	fmt.Print("masukan card number: ")
 	_, err := fmt.Scanln(&cardNumber)
 
-	if (err != nil) {
+	if err != nil {
 		return "", err
 	} else if isAtmValid(cardNumber) {
 		return cardNumber, nil
@@ -384,7 +390,7 @@ func isPinValid(pin string) error {
 }
 
 func inputPin() string {
-	var pin string;
+	var pin string
 	fmt.Print("masukan pin: ")
 	_, err := fmt.Scanln(&pin)
 
@@ -403,8 +409,8 @@ func inputPin() string {
 	return pin
 }
 
-func inputAmount() float64 {
-	var amount float64;
+func inputAmount() int {
+	var amount int
 	fmt.Print("masukan nominal: ")
 	_, err := fmt.Scan(&amount)
 
@@ -420,5 +426,5 @@ func inputAmount() float64 {
 }
 
 func getTime() string {
-	return "time"
+	return time.Now().Format("2006-01-02 15:04")
 }

@@ -1,7 +1,8 @@
 package transaction
 
-import (
+import (	
 	"fmt"
+	"strconv"
 )
 
 type Transaction interface {
@@ -9,8 +10,8 @@ type Transaction interface {
 }
 
 type SetorTransaction struct {
-	Time string
-	Nominal float64
+	Time       string
+	Nominal    int
 	CardNumber string
 }
 
@@ -19,12 +20,12 @@ func (t SetorTransaction) GetCardNumber() string {
 }
 
 func (t SetorTransaction) String() string {
-	return fmt.Sprintln(t.Time, " | ", t.Nominal, " - setor tunai");
+	return fmt.Sprintln(t.Time, " | ", strconv.Itoa(t.Nominal), " - setor tunai")
 }
 
 type TarikTransaction struct {
-	Time string
-	Nominal float64
+	Time       string
+	Nominal    int
 	CardNumber string
 }
 
@@ -33,12 +34,12 @@ func (t TarikTransaction) GetCardNumber() string {
 }
 
 func (t TarikTransaction) String() string {
-	return fmt.Sprintln(t.Time, " | ", t.Nominal, " - tarik tunai")
+	return fmt.Sprintln(t.Time, " | ", strconv.Itoa(t.Nominal), " - tarik tunai")
 }
 
 type BelanjaTransaction struct {
-	Time string
-	Nominal float64
+	Time       string
+	Nominal    int
 	CardNumber string
 }
 
@@ -47,13 +48,13 @@ func (t BelanjaTransaction) GetCardNumber() string {
 }
 
 func (t BelanjaTransaction) String() string {
-	return fmt.Sprintln(t.Time, " | ", t.Nominal, " - pembayaran belanja")
+	return fmt.Sprintln(t.Time, " | ", strconv.Itoa(t.Nominal), " - pembayaran belanja")
 }
 
 type SendTransaction struct {
-	Time string
-	Nominal float64
-	CardNumber string
+	Time               string
+	Nominal            int
+	CardNumber         string
 	ReceiverCardNumber string
 }
 
@@ -62,13 +63,13 @@ func (t SendTransaction) GetCardNumber() string {
 }
 
 func (t SendTransaction) String() string {
-	return fmt.Sprintln(t.Time, " | ", t.Nominal, " - kirim ke ", t.ReceiverCardNumber)
+	return fmt.Sprintln(t.Time, " | ", strconv.Itoa(t.Nominal), " - kirim ke ", t.ReceiverCardNumber)
 }
 
 type ReceiveTransaction struct {
-	Time string
-	Nominal float64
-	CardNumber string
+	Time             string
+	Nominal          int
+	CardNumber       string
 	SenderCardNumber string
 }
 
@@ -77,13 +78,13 @@ func (t ReceiveTransaction) GetCardNumber() string {
 }
 
 func (t ReceiveTransaction) String() string {
-	return fmt.Sprintln(t.Time, " | ", t.Nominal, " - terima dari ", t.SenderCardNumber)
+	return fmt.Sprintln(t.Time, " | ", strconv.Itoa(t.Nominal), " - terima dari ", t.SenderCardNumber)
 }
 
 type TopUpEmoneyTransaction struct {
-	Time string
-	Nominal float64
-	CardNumber string
+	Time               string
+	Nominal            int
+	CardNumber         string
 	ReceiverCardNumber string
 }
 
@@ -92,6 +93,5 @@ func (t TopUpEmoneyTransaction) GetCardNumber() string {
 }
 
 func (t TopUpEmoneyTransaction) String() string {
-	return fmt.Sprintln(t.Time, " | ", t.Nominal, " - top up e-money ", t.ReceiverCardNumber)
+	return fmt.Sprintln(t.Time, " | ", strconv.Itoa(t.Nominal), " - top up e-money ", t.ReceiverCardNumber)
 }
-
